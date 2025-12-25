@@ -1,0 +1,31 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<h2>Add New Rice Stock</h2>
+<div class="auth-container" style="max-width: 600px;">
+    <form method="post">
+        <div class="form-group">
+            <label for="p_name">Rice Name (e.g., Basmati, Kolam)</label>
+            <input type="text" name="p_name" id="p_name" required>
+        </div>
+        <div class="form-group">
+            <label for="p_type">Type (e.g., Long Grain, Short Grain)</label>
+            <input type="text" name="p_type" id="p_type" required>
+        </div>
+        <div class="form-group">
+            <label for="p_quantity">Quantity (in kg)</label>
+            <input type="number" name="p_quantity" id="p_quantity" required>
+        </div>
+        <div class="form-group">
+            <label for="p_priceperunit">Price per unit (₹)</label>
+            <input type="number" step="0.01" name="p_priceperunit" id="p_priceperunit" required>
+        </div>
+        <div class="form-group">
+            <label for="p_batch">Batch Number</label>
+            <input type="text" name="p_batch" id="p_batch">
+        </div>
+        <button type="submit" class="btn">Add Stock</button>
+        <a href="{{ url_for('dashboard_farmer') }}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

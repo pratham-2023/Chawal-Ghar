@@ -1,0 +1,78 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<h2>Farmer Dashboard</h2>
+<p>Welcome, {{ session['fullname'] }}!</p>
+
+<div style="margin-top: 40px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3>🌾 My Rice Stock</h3>
+        <a href="{{ url_for('add_product') }}" class="btn">Add New Rice Stock</a>
+    </div>
+
+    {% if products %}
+    <table style="width: 100%;">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Quantity (kg)</th>
+                <th>Price/Unit (₹)</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for product in products %}
+            <tr>
+                <td>{{ product['p_name'] }}</td>
+                <td>{{ product['p_type'] }}</td>
+                <td>{{ product['p_quantity'] }}</td>
+                <td>{{ product['p_priceperunit'] }}</td>
+                <td>{{ product['p_status'] }}</td>
+                <td>
+                    <a href="{{ url_for('delete_product', p_id=product['p_id']) }}" class="btn btn-secondary"
+                        style="background-color: #d32f2f; padding: 5px 10px; font-size: 0.8rem;"
+                        onclick="return confirm('Delete this stock?')">Delete</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p><i>No rice stock listed yet.</i></p>
+    {% endif %}
+</div>
+
+<div style="margin-top: 40px;">
+    <h3>📦 Sales & Orders</h3>
+    {% if orders %}
+    <table>
+        <thead>
+            <tr>
+                <th>Order ID</th>
+                <th>Customer</th>
+                <th>Rice</th>
+                <th>Qty Sold (approx)</th>
+                <th>Total ₹</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in orders %}
+            <tr>
+                <td>#{{ order['o_id'] }}</td>
+                <td>{{ order['c_fullname'] }}</td>
+                <td>{{ order['p_name'] }}</td>
+                <td>-</td> <!-- Derived from price/amount logic if needed, simplified here -->
+                <td>₹{{ order['o_amount'] }}</td>
+                <td>{{ order['o_status'] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p><i>No sales yet.</i></p>
+    {% endif %}
+</div>
+{% endblock %}

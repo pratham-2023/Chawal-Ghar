@@ -1,0 +1,68 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<h2>Customer Dashboard</h2>
+<p>Welcome, {{ session['fullname'] }}!</p>
+
+<div style="margin-top: 40px;">
+    <h3>🍚 Available Rice for Sale</h3>
+    {% if products %}
+    <table>
+        <thead>
+            <tr>
+                <th>Farmer</th>
+                <th>Rice Name</th>
+                <th>Type</th>
+                <th>Price/kg</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for product in products %}
+            <tr>
+                <td>{{ product['f_fullname'] }}</td>
+                <td>{{ product['p_name'] }}</td>
+                <td>{{ product['p_type'] }}</td>
+                <td>₹{{ product['p_priceperunit'] }}</td>
+                <td><a href="{{ url_for('buy_product', p_id=product['p_id']) }}" class="btn">Buy Now</a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p><i>No rice available currently.</i></p>
+    {% endif %}
+</div>
+
+<div style="margin-top: 40px;">
+    <h3>📜 My Orders</h3>
+    {% if my_orders %}
+    <table>
+        <thead>
+            <tr>
+                <th>Order ID</th>
+                <th>Rice</th>
+                <th>Date</th>
+                <th>Destination</th>
+                <th>Amount</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in my_orders %}
+            <tr>
+                <td>#{{ order['o_id'] }}</td>
+                <td>{{ order['p_name'] }}</td>
+                <td>{{ order['o_date'] }}</td>
+                <td>{{ order['o_destination'] }}</td>
+                <td>₹{{ order['o_amount'] }}</td>
+                <td>{{ order['o_status'] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p><i>No orders placed yet.</i></p>
+    {% endif %}
+</div>
+{% endblock %}

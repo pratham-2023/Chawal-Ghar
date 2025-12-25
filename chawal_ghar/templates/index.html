@@ -1,0 +1,26 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="hero">
+    <h1>Welcome to Chawal Ghar</h1>
+    <p>Connecting Farmers Directly with Consumers for Fair Rice Trading.</p>
+    <div>
+        <a href="{{ url_for('register') }}" class="btn">Get Started</a>
+        <a href="{{ url_for('login') }}" class="btn btn-secondary">Login</a>
+    </div>
+</div>
+<div style="display: flex; justify-content: space-around; margin-top: 50px; text-align: center;">
+    <div>
+        <h3>👨‍🌾 For Farmers</h3>
+        <p>List your rice stock, manage inventory, and get fair prices.</p>
+    </div>
+    <div>
+        <h3>🛒 For Customers</h3>
+        <p>Buy high-quality rice directly from the source.</p>
+    </div>
+    <div>
+        <h3>✅ Transparent</h3>
+        <p>No middlemen, secure payments, and order tracking.</p>
+    </div>
+</div>
+{% endblock %}
