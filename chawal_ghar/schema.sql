@@ -4,6 +4,16 @@ DROP TABLE IF EXISTS customers;
 DROP TABLE IF EXISTS products;
 DROP TABLE IF EXISTS orders;
 DROP TABLE IF EXISTS payments;
+DROP TABLE IF EXISTS cart;
+
+CREATE TABLE cart (
+    cart_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    c_id INTEGER NOT NULL,
+    p_id INTEGER NOT NULL,
+    quantity INTEGER NOT NULL,
+    FOREIGN KEY (c_id) REFERENCES customers (c_id),
+    FOREIGN KEY (p_id) REFERENCES products (p_id)
+);
 
 CREATE TABLE admins (
     a_id INTEGER PRIMARY KEY AUTOINCREMENT,

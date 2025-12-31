@@ -1,49 +1,52 @@
-
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chawal Ghar - Online Rice Trading</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-    
+
 
 </head>
+
 <body>
     <nav>
         <div class="logo">Chawal Ghar</div>
         <ul class="nav-links">
             <li><a href="{{ url_for('index') }}">Home</a></li>
             {% if session.get('user_id') %}
-                {% if session['role'] == 'admin' %}
-                    <li><a href="{{ url_for('dashboard_admin') }}">Dashboard</a></li>
-                {% elif session['role'] == 'farmer' %}
-                    <li><a href="{{ url_for('dashboard_farmer') }}">Dashboard</a></li>
-                {% elif session['role'] == 'customer' %}
-                    <li><a href="{{ url_for('dashboard_customer') }}">Dashboard</a></li>
-                {% endif %}
-                <li><a href="{{ url_for('logout') }}">Logout</a></li>
+            {% if session['role'] == 'admin' %}
+            <li><a href="{{ url_for('dashboard_admin') }}">Dashboard</a></li>
+            {% elif session['role'] == 'farmer' %}
+            <li><a href="{{ url_for('dashboard_farmer') }}">Dashboard</a></li>
+            {% elif session['role'] == 'customer' %}
+            <li><a href="{{ url_for('dashboard_customer') }}">Dashboard</a></li>
+            <li><a href="{{ url_for('view_cart') }}">Cart</a></li>
+            {% endif %}
+            <li><a href="{{ url_for('logout') }}">Logout</a></li>
             {% else %}
-                <li><a href="{{ url_for('login') }}">Login</a></li>
-                <li><a href="{{ url_for('register') }}">Register</a></li>
+            <li><a href="{{ url_for('login') }}">Login</a></li>
+            <li><a href="{{ url_for('register') }}">Register</a></li>
             {% endif %}
         </ul>
     </nav>
     <div class="container">
         {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <ul class="flashes">
-                {% for category, message in messages %}
-                    <li class="{{ category }}">{{ message }}</li>
-                {% endfor %}
-                </ul>
-            {% endif %}
+        {% if messages %}
+        <ul class="flashes">
+            {% for category, message in messages %}
+            <li class="{{ category }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
         {% endwith %}
         {% block content %}{% endblock %}
     </div>
     <footer>
-        <p>&copy; Chawal Ghar Made By Aditi &#128526. All rights reserved. </p>
+        <p>&copy; Chawal Ghar Made By Aditi. All rights reserved. </p>
     </footer>
 </body>
+
 </html>

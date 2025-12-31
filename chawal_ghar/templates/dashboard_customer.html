@@ -5,36 +5,52 @@
 <p>Welcome, {{ session['fullname'] }}!</p>
 
 <div style="margin-top: 40px;">
-    <h3>🍚 Available Rice for Sale</h3>
+    <h3>🍚 Premium Rice Varieties Available</h3>
+    <p style="color: #666; margin-bottom: 20px;">Browse our selection of rice directly from local farmers</p>
+
     {% if products %}
-    <table>
-        <thead>
-            <tr>
-                <th>Farmer</th>
-                <th>Rice Name</th>
-                <th>Type</th>
-                <th>Price/kg</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for product in products %}
-            <tr>
-                <td>{{ product['f_fullname'] }}</td>
-                <td>{{ product['p_name'] }}</td>
-                <td>{{ product['p_type'] }}</td>
-                <td>₹{{ product['p_priceperunit'] }}</td>
-                <td><a href="{{ url_for('buy_product', p_id=product['p_id']) }}" class="btn">Buy Now</a></td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="rice-grid">
+        {% for product in products %}
+        {% set rice_type = product['p_type']|lower %}
+        {% set image_map = {
+        'basmati': 'basmati.png',
+        'kolam': 'kolam.png',
+        'sona masoori': 'sona_masoori.png',
+        'jasmine': 'jasmine.png',
+        'brown': 'brown.png',
+        'red': 'red.png',
+        'black': 'black.png',
+        'ponni': 'ponni.png'
+        } %}
+        {% set rice_image = image_map.get(rice_type, 'basmati.png') %}
+
+        <div class="rice-card">
+            <img src="{{ url_for('static', filename='images/rice_varieties/' + rice_image) }}"
+                alt="{{ product['p_type'] }} Rice" class="rice-card-image">
+
+            <div class="rice-card-content">
+                <div class="rice-card-title">{{ product['p_name'] }}</div>
+                <div class="rice-card-type">{{ product['p_type'] }}</div>
+                <div class="rice-card-farmer">{{ product['f_fullname'] }}</div>
+                <div class="rice-card-price">₹{{ product['p_priceperunit'] }}/kg</div>
+
+                <div class="rice-card-actions">
+                    <form action="{{ url_for('add_to_cart', p_id=product['p_id']) }}" method="POST">
+                        <input type="number" name="quantity" value="1" min="1" max="{{ product['p_quantity'] }}">
+                        <button type="submit" class="btn btn-cart">🛒 Add to Cart</button>
+                    </form>
+                    <a href="{{ url_for('buy_product', p_id=product['p_id']) }}" class="btn btn-buy-now">⚡ Buy Now</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
     {% else %}
     <p><i>No rice available currently.</i></p>
     {% endif %}
 </div>
 
-<div style="margin-top: 40px;">
+<div style="margin-top: 60px;">
     <h3>📜 My Orders</h3>
     {% if my_orders %}
     <table>

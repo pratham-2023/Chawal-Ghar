@@ -2,22 +2,47 @@
 
 {% block content %}
 <h2>Add New Rice Stock</h2>
+
+{% if rice_type %}
+<!-- Show selected rice variety -->
+<div style="text-align: center; margin: 20px 0; padding: 20px; background: #f9f9f9; border-radius: 10px;">
+    {% set image_map = {
+    'Basmati': 'basmati.png',
+    'Kolam': 'kolam.png',
+    'Sona Masoori': 'sona_masoori.png',
+    'Jasmine': 'jasmine.png',
+    'Brown': 'brown.png',
+    'Red': 'red.png',
+    'Black': 'black.png',
+    'Ponni': 'ponni.png'
+    } %}
+    {% set rice_image = image_map.get(rice_type, 'basmati.png') %}
+    <img src="{{ url_for('static', filename='images/rice_varieties/' + rice_image) }}" alt="{{ rice_type }} Rice"
+        style="max-width: 200px; height: auto; border-radius: 10px; margin-bottom: 15px;">
+    <h3 style="color: #2e7d32; margin: 0;">{{ rice_type }} Rice</h3>
+</div>
+{% endif %}
+
 <div class="auth-container" style="max-width: 600px;">
     <form method="post">
         <div class="form-group">
-            <label for="p_name">Rice Name (e.g., Basmati, Kolam)</label>
-            <input type="text" name="p_name" id="p_name" required>
+            <label for="p_name">Rice Name (e.g., Premium Basmati, Organic Kolam)</label>
+            <input type="text" name="p_name" id="p_name" value="{% if rice_type %}{{ rice_type }}{% endif %}" required>
         </div>
         <div class="form-group">
-            <label for="p_type">Type (e.g., Long Grain, Short Grain)</label>
-            <input type="text" name="p_type" id="p_type" required>
+            <label for="p_type">Rice Type</label>
+            <input type="text" name="p_type" id="p_type" value="{% if rice_type %}{{ rice_type }}{% endif %}" {% if
+                rice_type %}readonly style="background-color: #f0f0f0;" {% endif %} required>
+            {% if rice_type %}
+            <small style="color: #666;">Type is pre-selected based on your choice</small>
+            {% endif %}
         </div>
         <div class="form-group">
             <label for="p_quantity">Quantity (in kg)</label>
             <input type="number" name="p_quantity" id="p_quantity" required>
         </div>
         <div class="form-group">
-            <label for="p_priceperunit">Price per unit (₹)</label>
+            <label for="p_priceperunit">Price per unit (₹/kg)</label>
             <input type="number" step="0.01" name="p_priceperunit" id="p_priceperunit" required>
         </div>
         <div class="form-group">

@@ -4,6 +4,47 @@
 <h2>Farmer Dashboard</h2>
 <p>Welcome, {{ session['fullname'] }}!</p>
 
+<!-- Rice Variety Reference Guide -->
+<div style="margin: 30px 0;">
+    <h4 style="color: #2e7d32; margin-bottom: 10px;">🌾 Quick Add Rice Stock</h4>
+    <p style="color: #666; font-size: 0.9rem; margin-bottom: 20px;">Click on any rice variety to quickly add it to your
+        stock</p>
+    <div class="rice-variety-reference">
+        <a href="{{ url_for('add_product', rice_type='Basmati') }}" class="variety-thumb">
+            <img src="{{ url_for('static', filename='images/rice_varieties/basmati.png') }}" alt="Basmati">
+            <span>Basmati</span>
+        </a>
+        <a href="{{ url_for('add_product', rice_type='Kolam') }}" class="variety-thumb">
+            <img src="{{ url_for('static', filename='images/rice_varieties/kolam.png') }}" alt="Kolam">
+            <span>Kolam</span>
+        </a>
+        <a href="{{ url_for('add_product', rice_type='Sona Masoori') }}" class="variety-thumb">
+            <img src="{{ url_for('static', filename='images/rice_varieties/sona_masoori.png') }}" alt="Sona Masoori">
+            <span>Sona Masoori</span>
+        </a>
+        <a href="{{ url_for('add_product', rice_type='Jasmine') }}" class="variety-thumb">
+            <img src="{{ url_for('static', filename='images/rice_varieties/jasmine.png') }}" alt="Jasmine">
+            <span>Jasmine</span>
+        </a>
+        <a href="{{ url_for('add_product', rice_type='Brown') }}" class="variety-thumb">
+            <img src="{{ url_for('static', filename='images/rice_varieties/brown.png') }}" alt="Brown">
+            <span>Brown</span>
+        </a>
+        <a href="{{ url_for('add_product', rice_type='Red') }}" class="variety-thumb">
+            <img src="{{ url_for('static', filename='images/rice_varieties/red.png') }}" alt="Red">
+            <span>Red</span>
+        </a>
+        <a href="{{ url_for('add_product', rice_type='Black') }}" class="variety-thumb">
+            <img src="{{ url_for('static', filename='images/rice_varieties/black.png') }}" alt="Black">
+            <span>Black</span>
+        </a>
+        <a href="{{ url_for('add_product', rice_type='Ponni') }}" class="variety-thumb">
+            <img src="{{ url_for('static', filename='images/rice_varieties/ponni.png') }}" alt="Ponni">
+            <span>Ponni</span>
+        </a>
+    </div>
+</div>
+
 <div style="margin-top: 40px;">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
         <h3>🌾 My Rice Stock</h3>
@@ -64,7 +105,7 @@
                 <td>#{{ order['o_id'] }}</td>
                 <td>{{ order['c_fullname'] }}</td>
                 <td>{{ order['p_name'] }}</td>
-                <td>-</td> <!-- Derived from price/amount logic if needed, simplified here -->
+                <td>-</td>
                 <td>₹{{ order['o_amount'] }}</td>
                 <td>{{ order['o_status'] }}</td>
             </tr>

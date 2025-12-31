@@ -1,32 +1,178 @@
 {% extends "layout.html" %}
 
 {% block content %}
-<h2>Buy Rice</h2>
-<div class="auth-container" style="max-width: 600px;">
-    <h3>{{ product['p_name'] }} ({{ product['p_type'] }})</h3>
-    <p>Price: ₹{{ product['p_priceperunit'] }} / kg</p>
-    <p>Available: {{ product['p_quantity'] }} kg</p>
-    <br>
-    <form method="post">
-        <div class="form-group">
-            <label for="quantity">Quantity to Buy (kg)</label>
-            <input type="number" step="0.5" name="quantity" id="quantity" max="{{ product['p_quantity'] }}" required>
+<h2>Buy Rice - Quick Purchase</h2>
+
+<div style="max-width: 800px; margin: 0 auto;">
+    <!-- Product Display -->
+    <div
+        style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 30px;">
+        {% set image_map = {
+        'basmati': 'basmati.png',
+        'kolam': 'kolam.png',
+        'sona masoori': 'sona_masoori.png',
+        'jasmine': 'jasmine.png',
+        'brown': 'brown.png',
+        'red': 'red.png',
+        'black': 'black.png',
+        'ponni': 'ponni.png'
+        } %}
+        {% set rice_type = product['p_type']|lower %}
+        {% set rice_image = image_map.get(rice_type, 'basmati.png') %}
+
+        <div style="display: flex; gap: 30px; align-items: center; flex-wrap: wrap;">
+            <img src="{{ url_for('static', filename='images/rice_varieties/' + rice_image) }}"
+                alt="{{ product['p_type'] }}"
+                style="width: 200px; height: 200px; object-fit: cover; border-radius: 12px;">
+
+            <div style="flex: 1; min-width: 250px;">
+                <h3 style="color: #2e7d32; margin: 0 0 10px 0; font-size: 1.8rem;">{{ product['p_name'] }}</h3>
+                <p style="color: #666; font-size: 1.1rem; margin: 5px 0;">{{ product['p_type'] }}</p>
+                <p style="color: #2e7d32; font-size: 2rem; font-weight: 700; margin: 15px 0;">
+                    ₹<span id="price-per-kg">{{ product['p_priceperunit'] }}</span>/kg
+                </p>
+                <p style="color: #888; margin: 5px 0;">
+                    <strong>Available:</strong> {{ product['p_quantity'] }} kg
+                </p>
+            </div>
         </div>
-        <div class="form-group">
-            <label for="destination">Delivery Address</label>
-            <input type="text" name="destination" id="destination" required>
-        </div>
-        <div class="form-group">
-            <label for="payment_method">Payment Method</label>
-            <select name="payment_method" id="payment_method">
-                <option value="UPI">UPI</option>
-                <option value="Card">Credit/Debit Card</option>
-                <option value="NetBanking">Net Banking</option>
-                <option value="COD">Cash on Delivery</option>
-            </select>
-        </div>
-        <button type="submit" class="btn">Confirm Purchase</button>
-        <a href="{{ url_for('dashboard_customer') }}" class="btn btn-secondary">Cancel</a>
-    </form>
+    </div>
+
+    <!-- Order Form -->
+    <div style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+        <h3 style="color: #2e7d32; margin-top: 0;">Order Details</h3>
+        <form action="{{ url_for('buy_product', p_id=product['p_id']) }}" method="POST" id="buy-form">
+            <div class="form-group">
+                <label for="quantity">Quantity (kg)</label>
+                <input type="number" step="0.5" name="quantity" id="quantity" max="{{ product['p_quantity'] }}"
+                    min="0.5" value="1" required onchange="updateTotal()" oninput="updateTotal()">
+            </div>
+
+            <div class="form-group">
+                <label for="destination">Delivery Address</label>
+                <textarea name="destination" id="destination" required
+                    placeholder="Enter your complete delivery address"
+                    style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; min-height: 80px;"></textarea>
+            </div>
+
+            <!-- Total Display -->
+            <div style="background: #f9f9f9; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 1.2rem; font-weight: 600;">Total Amount:</span>
+                    <span style="font-size: 2rem; font-weight: 700; color: #2e7d32;">
+                        ₹<span id="total-amount">{{ product['p_priceperunit'] }}</span>
+                    </span>
+                </div>
+            </div>
+
+            <button type="button" id="rzp-button" class="btn"
+                style="width: 100%; background: #3399cc; font-size: 1.1rem; padding: 15px;">
+                💳 Pay with Razorpay
+            </button>
+            <a href="{{ url_for('dashboard_customer') }}" class="btn btn-secondary"
+                style="width: 100%; text-align: center; margin-top: 10px; display: block;">
+                Cancel
+            </a>
+        </form>
+    </div>
 </div>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+    const pricePerKg = {{ product['p_priceperunit'] }};
+    const maxQuantity = {{ product['p_quantity'] }};
+
+    function updateTotal() {
+        const quantity = parseFloat(document.getElementById('quantity').value) || 0;
+        if (quantity > maxQuantity) {
+            alert(`Only ${maxQuantity} kg available!`);
+            document.getElementById('quantity').value = maxQuantity;
+            return;
+        }
+        const total = (quantity * pricePerKg).toFixed(2);
+        document.getElementById('total-amount').textContent = total;
+    }
+
+    // Razorpay Integration
+    document.getElementById('rzp-button').onclick = function (e) {
+        e.preventDefault();
+
+        const quantity = parseFloat(document.getElementById('quantity').value);
+        const destination = document.getElementById('destination').value.trim();
+
+        if (!quantity || quantity <= 0) {
+            alert('Please enter a valid quantity');
+            return;
+        }
+
+        if (quantity > maxQuantity) {
+            alert(`Only ${maxQuantity} kg available!`);
+            return;
+        }
+
+        if (!destination) {
+            alert('Please enter delivery address');
+            return;
+        }
+
+        const totalAmount = quantity * pricePerKg;
+
+        var options = {
+            "key": "{{ key_id }}",
+            "amount": Math.round(totalAmount * 100), // Razorpay expects amount in paise
+            "currency": "INR",
+            "name": "Chawal Ghar",
+            "description": "{{ product['p_name'] }} - {{ product['p_type'] }}",
+            "order_id": "{{ payment.id }}",
+            "handler": function (response) {
+                // Payment successful - submit the form
+                document.getElementById('buy-form').submit();
+            },
+            "prefill": {
+                "name": "{{ session['fullname'] }}",
+                "email": "customer@example.com",
+                "contact": "9999999999"
+            },
+            "theme": {
+                "color": "#2e7d32"
+            }
+        };
+
+        var rzp = new Razorpay(options);
+        rzp.on('payment.failed', function (response) {
+            alert('Payment failed: ' + response.error.description);
+        });
+        rzp.open();
+    };
+
+    // Initialize total on page load
+    updateTotal();
+</script>
+
+<style>
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #333;
+    }
+
+    .form-group input {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-size: 1rem;
+    }
+
+    @media (max-width: 600px) {
+        div[style*="display: flex"] {
+            flex-direction: column !important;
+        }
+    }
+</style>
 {% endblock %}

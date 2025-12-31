@@ -2,9 +2,10 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 import sqlite3
 import os
 from werkzeug.security import generate_password_hash, check_password_hash
+import razorpay
 
 app = Flask(__name__)
-app.secret_key = 'supersecretkey'  # Change this in production
+app.secret_key = os.environ.get('SECRET_KEY', 'chawal_ghar_secret_key_2025')
 DATABASE = 'database.db'
 
 def get_db():
@@ -133,6 +134,9 @@ def add_product():
     if session.get('role') != 'farmer':
         return redirect(url_for('login'))
     
+    # Get rice type from query parameter if provided
+    rice_type = request.args.get('rice_type', '')
+    
     if request.method == 'POST':
         p_name = request.form['p_name']
         p_type = request.form['p_type']
@@ -148,7 +152,7 @@ def add_product():
         flash('Product added successfully!', 'success')
         return redirect(url_for('dashboard_farmer'))
         
-    return render_template('add_product.html')
+    return render_template('add_product.html', rice_type=rice_type)
 
 @app.route('/farmer/delete_product/<int:p_id>')
 def delete_product(p_id):
@@ -186,9 +190,9 @@ def buy_product(p_id):
         return redirect(url_for('dashboard_customer'))
 
     if request.method == 'POST':
+        # This handles the payment success callback
         quantity = float(request.form['quantity'])
         destination = request.form['destination']
-        payment_method = request.form['payment_method']
         
         if quantity > product['p_quantity']:
             flash(f'Only {product["p_quantity"]} kg available.', 'error')
@@ -203,20 +207,25 @@ def buy_product(p_id):
         
         # 2. Create Payment
         db.execute('INSERT INTO payments (o_id, c_id, p_amount, p_method, p_status) VALUES (?, ?, ?, ?, ?)',
-                   (o_id, session['user_id'], total_amount, payment_method, 'Completed'))
+                   (o_id, session['user_id'], total_amount, 'Online (Razorpay)', 'Completed'))
         
         # 3. Update Inventory
         new_quantity = product['p_quantity'] - quantity
-        if new_quantity == 0:
-            db.execute('UPDATE products SET p_quantity = ?, p_status = "Sold Out" WHERE p_id = ?', (new_quantity, p_id))
+        if new_quantity <= 0:
+            db.execute('UPDATE products SET p_quantity = 0, p_status = "Sold Out" WHERE p_id = ?', (p_id,))
         else:
             db.execute('UPDATE products SET p_quantity = ? WHERE p_id = ?', (new_quantity, p_id))
             
         db.commit()
-        flash('Order placed successfully!', 'success')
+        flash('Payment successful! Order placed.', 'success')
         return redirect(url_for('dashboard_customer'))
+    
+    # GET request - Create Razorpay order for payment
+    initial_amount = product['p_priceperunit']
+    data = { "amount": int(initial_amount * 100), "currency": "INR", "receipt": f"buy_rcpt_{p_id}" }
+    payment = client.order.create(data=data)
 
-    return render_template('buy_product.html', product=product)
+    return render_template('buy_product.html', product=product, payment=payment, key_id=KEY_ID)
 
 # --- Admin Routes ---
 
@@ -235,6 +244,145 @@ def dashboard_admin():
     ''').fetchall()
     
     return render_template('dashboard_admin.html', orders=orders)
+
+# --- Cart & Payment Routes ---
+
+# Razorpay Configuration
+KEY_ID = 'rzp_test_RxwJftVK3EV6AU'
+KEY_SECRET = 'vpadQBd7bt5KKxSB0p4jTOMD'
+client = razorpay.Client(auth=(KEY_ID, KEY_SECRET))
+
+@app.route('/customer/add_to_cart/<int:p_id>', methods=['POST'])
+def add_to_cart(p_id):
+    if session.get('role') != 'customer':
+        return redirect(url_for('login'))
+        
+    db = get_db()
+    try:
+        quantity = int(request.form['quantity'])
+    except ValueError:
+        flash('Invalid quantity.', 'error')
+        return redirect(url_for('dashboard_customer'))
+
+    product = db.execute('SELECT * FROM products WHERE p_id = ?', (p_id,)).fetchone()
+    if not product:
+        flash('Product not found.', 'error')
+        return redirect(url_for('dashboard_customer'))
+        
+    if quantity > product['p_quantity']:
+        flash(f'Only {product["p_quantity"]} kg available.', 'error')
+        return redirect(url_for('dashboard_customer'))
+        
+    # Check if item already in cart
+    existing_item = db.execute('SELECT * FROM cart WHERE c_id = ? AND p_id = ?', (session['user_id'], p_id)).fetchone()
+    
+    if existing_item:
+        new_quantity = existing_item['quantity'] + quantity
+        if new_quantity > product['p_quantity']:
+             flash(f'Total quantity in cart exceeds availability ({product["p_quantity"]} kg).', 'error')
+        else:
+            db.execute('UPDATE cart SET quantity = ? WHERE cart_id = ?', (new_quantity, existing_item['cart_id']))
+            flash('Cart updated.', 'success')
+    else:
+        db.execute('INSERT INTO cart (c_id, p_id, quantity) VALUES (?, ?, ?)', (session['user_id'], p_id, quantity))
+        flash('Added to cart.', 'success')
+        
+    db.commit()
+    return redirect(url_for('dashboard_customer'))
+
+@app.route('/customer/cart')
+def view_cart():
+    if session.get('role') != 'customer':
+        return redirect(url_for('login'))
+        
+    db = get_db()
+    cart_items = db.execute('''
+        SELECT cart.*, products.p_name, products.p_priceperunit, products.p_quantity as max_quantity 
+        FROM cart 
+        JOIN products ON cart.p_id = products.p_id 
+        WHERE cart.c_id = ?
+    ''', (session['user_id'],)).fetchall()
+    
+    total_amount = sum([item['quantity'] * item['p_priceperunit'] for item in cart_items])
+    
+    return render_template('cart.html', cart_items=cart_items, total_amount=total_amount)
+
+@app.route('/customer/cart/remove/<int:cart_id>')
+def remove_from_cart(cart_id):
+    if session.get('role') != 'customer':
+        return redirect(url_for('login'))
+        
+    db = get_db()
+    db.execute('DELETE FROM cart WHERE cart_id = ? AND c_id = ?', (cart_id, session['user_id']))
+    db.commit()
+    flash('Item removed from cart.', 'success')
+    return redirect(url_for('view_cart'))
+
+@app.route('/customer/checkout', methods=['GET', 'POST'])
+def checkout():
+    if session.get('role') != 'customer':
+        return redirect(url_for('login'))
+        
+    db = get_db()
+    cart_items = db.execute('''
+        SELECT cart.*, products.p_name, products.p_priceperunit 
+        FROM cart 
+        JOIN products ON cart.p_id = products.p_id 
+        WHERE cart.c_id = ?
+    ''', (session['user_id'],)).fetchall()
+    
+    if not cart_items:
+        flash('Your cart is empty.', 'error')
+        return redirect(url_for('dashboard_customer'))
+        
+    total_amount = sum([item['quantity'] * item['p_priceperunit'] for item in cart_items])
+    
+    # Razorpay Order Creation
+    data = { "amount": int(total_amount * 100), "currency": "INR", "receipt": "order_rcptid_11" }
+    payment = client.order.create(data=data)
+    
+    return render_template('checkout.html', cart_items=cart_items, total_amount=total_amount, payment=payment, key_id=KEY_ID)
+
+@app.route('/customer/payment/success', methods=['POST'])
+def payment_success():
+    if session.get('role') != 'customer':
+        return redirect(url_for('login'))
+    
+    db = get_db()
+    cart_items = db.execute('''
+        SELECT cart.*, products.p_name, products.p_priceperunit, products.p_quantity as stock_quantity, products.f_id
+        FROM cart 
+        JOIN products ON cart.p_id = products.p_id 
+        WHERE cart.c_id = ?
+    ''', (session['user_id'],)).fetchall()
+    
+    destination = request.form.get('destination', 'Default Address')
+    
+    for item in cart_items:
+        total_price = item['quantity'] * item['p_priceperunit']
+        
+        # 1. Create Order
+        cursor = db.execute('INSERT INTO orders (c_id, p_id, o_status, o_destination, o_amount) VALUES (?, ?, ?, ?, ?)',
+                   (session['user_id'], item['p_id'], 'Confirmed', destination, total_price))
+        o_id = cursor.lastrowid
+        
+        # 2. Create Payment Record
+        db.execute('INSERT INTO payments (o_id, c_id, p_amount, p_method, p_status) VALUES (?, ?, ?, ?, ?)',
+                   (o_id, session['user_id'], total_price, 'Online (Razorpay)', 'Completed'))
+        
+        # 3. Update Inventory
+        new_quantity = item['stock_quantity'] - item['quantity']
+        if new_quantity <= 0:
+            db.execute('UPDATE products SET p_quantity = 0, p_status = "Sold Out" WHERE p_id = ?', (item['p_id'],))
+        else:
+            db.execute('UPDATE products SET p_quantity = ? WHERE p_id = ?', (new_quantity, item['p_id']))
+            
+    # Clear Cart
+    db.execute('DELETE FROM cart WHERE c_id = ?', (session['user_id'],))
+    db.commit()
+    
+    flash('Payment successful! Orders placed.', 'success')
+    return redirect(url_for('dashboard_customer'))
 
 if __name__ == '__main__':
     if not os.path.exists(DATABASE):
