@@ -1,0 +1,31 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="form-container">
+    <h2>Edit Admin Profile</h2>
+    <form method="POST">
+        <div class="form-group">
+            <label for="fullname">Full Name:</label>
+            <input type="text" id="fullname" name="fullname" value="{{ admin['a_fullname'] }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="contact">Contact Number:</label>
+            <input type="text" id="contact" name="contact" value="{{ admin['a_contact'] or '' }}">
+        </div>
+
+        <div class="form-group">
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" value="{{ admin['a_email'] or '' }}">
+        </div>
+
+        <div class="form-group">
+            <label for="address">Address:</label>
+            <textarea id="address" name="address">{{ admin['a_address'] or '' }}</textarea>
+        </div>
+
+        <button type="submit" class="btn">Update Profile</button>
+        <a href="{{ url_for('dashboard_admin') }}" class="btn btn-secondary">Back to Dashboard</a>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="form-container">
+    <h2>Edit Customer Profile</h2>
+    <form method="POST">
+        <div class="form-group">
+            <label for="fullname">Full Name:</label>
+            <input type="text" id="fullname" name="fullname" value="{{ customer['c_fullname'] }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" value="{{ customer['c_email'] or '' }}">
+        </div>
+
+        <div class="form-group">
+            <label for="contact">Contact:</label>
+            <input type="text" id="contact" name="contact" value="{{ customer['c_contact'] or '' }}">
+        </div>
+
+        <div class="form-group">
+            <label for="address">Address:</label>
+            <textarea id="address" name="address">{{ customer['c_address'] or '' }}</textarea>
+        </div>
+
+        <button type="submit" class="btn">Update Customer</button>
+        <a href="{{ url_for('admin_customers') }}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

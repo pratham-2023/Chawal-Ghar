@@ -2,7 +2,14 @@
 
 {% block content %}
 <h2>Admin Dashboard</h2>
-<p>Welcome, Admin {{ session['fullname'] }}!</p>
+<p>Welcome, Admin {{ session['fullname'] }}! | <a href="{{ url_for('admin_profile') }}">My Profile</a></p>
+
+<div class="admin-actions" style="margin-bottom: 20px;">
+    <a href="{{ url_for('admin_customers') }}" class="btn">Manage Customers</a>
+    <a href="{{ url_for('admin_farmers') }}" class="btn">Manage Farmers</a>
+</div>
+
+
 
 <div style="margin-top: 20px;">
     <h3>System Overview - All Orders</h3>

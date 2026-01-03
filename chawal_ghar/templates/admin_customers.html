@@ -1,0 +1,37 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<h2>Manage Customers</h2>
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Full Name</th>
+                <th>Email</th>
+                <th>Contact</th>
+                <th>Address</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for customer in customers %}
+            <tr>
+                <td>{{ customer['c_id'] }}</td>
+                <td>{{ customer['c_fullname'] }}</td>
+                <td>{{ customer['c_email'] }}</td>
+                <td>{{ customer['c_contact'] }}</td>
+                <td>{{ customer['c_address'] }}</td>
+                <td>
+                    <a href="{{ url_for('admin_edit_customer', c_id=customer['c_id']) }}" class="btn-small">Edit</a>
+                    <a href="{{ url_for('admin_delete_customer', c_id=customer['c_id']) }}" class="btn-small btn-danger"
+                        onclick="return confirm('Are you sure?')">Delete</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+<br>
+<a href="{{ url_for('dashboard_admin') }}" class="btn btn-secondary">Back to Dashboard</a>
+{% endblock %}

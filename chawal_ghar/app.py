@@ -245,6 +245,128 @@ def dashboard_admin():
     
     return render_template('dashboard_admin.html', orders=orders)
 
+@app.route('/admin/profile', methods=['GET', 'POST'])
+def admin_profile():
+    if session.get('role') != 'admin':
+        return redirect(url_for('login'))
+        
+    db = get_db()
+    
+    if request.method == 'POST':
+        fullname = request.form['fullname']
+        contact = request.form['contact']
+        email = request.form['email']
+        address = request.form['address']
+        
+        db.execute('UPDATE admins SET a_fullname = ?, a_contact = ?, a_email = ?, a_address = ? WHERE a_id = ?',
+                   (fullname, contact, email, address, session['user_id']))
+        db.commit()
+        session['fullname'] = fullname # Update session fullname
+        flash('Profile updated successfully!', 'success')
+        return redirect(url_for('admin_profile'))
+        
+    admin = db.execute('SELECT * FROM admins WHERE a_id = ?', (session['user_id'],)).fetchone()
+    return render_template('admin_profile.html', admin=admin)
+
+@app.route('/admin/customers')
+def admin_customers():
+    if session.get('role') != 'admin':
+        return redirect(url_for('login'))
+    
+    db = get_db()
+    customers = db.execute('SELECT * FROM customers').fetchall()
+    return render_template('admin_customers.html', customers=customers)
+
+@app.route('/admin/customer/edit/<int:c_id>', methods=['GET', 'POST'])
+def admin_edit_customer(c_id):
+    if session.get('role') != 'admin':
+        return redirect(url_for('login'))
+        
+    db = get_db()
+    
+    if request.method == 'POST':
+        fullname = request.form['fullname']
+        email = request.form['email']
+        contact = request.form['contact']
+        address = request.form['address']
+        
+        db.execute('UPDATE customers SET c_fullname = ?, c_email = ?, c_contact = ?, c_address = ? WHERE c_id = ?',
+                   (fullname, email, contact, address, c_id))
+        db.commit()
+        flash('Customer updated successfully.', 'success')
+        return redirect(url_for('admin_customers'))
+        
+    customer = db.execute('SELECT * FROM customers WHERE c_id = ?', (c_id,)).fetchone()
+    if not customer:
+         flash('Customer not found.', 'error')
+         return redirect(url_for('admin_customers'))
+
+    return render_template('admin_edit_customer.html', customer=customer)
+
+@app.route('/admin/customer/delete/<int:c_id>')
+def admin_delete_customer(c_id):
+    if session.get('role') != 'admin':
+        return redirect(url_for('login'))
+    
+    db = get_db()
+    db.execute('DELETE FROM customers WHERE c_id = ?', (c_id,))
+    db.commit()
+    flash('Customer deleted successfully.', 'success')
+    return redirect(url_for('admin_customers'))
+
+@app.route('/admin/farmers')
+def admin_farmers():
+    if session.get('role') != 'admin':
+        return redirect(url_for('login'))
+    
+    db = get_db()
+    farmers = db.execute('SELECT * FROM farmers').fetchall()
+    return render_template('admin_farmers.html', farmers=farmers)
+
+@app.route('/admin/farmer/edit/<int:f_id>', methods=['GET', 'POST'])
+def admin_edit_farmer(f_id):
+    if session.get('role') != 'admin':
+        return redirect(url_for('login'))
+        
+    db = get_db()
+    
+    if request.method == 'POST':
+        fullname = request.form['fullname']
+        email = request.form['email']
+        contact = request.form['contact']
+        address = request.form['address']
+        
+        db.execute('UPDATE farmers SET f_fullname = ?, f_email = ?, f_contact = ?, f_address = ? WHERE f_id = ?',
+                   (fullname, email, contact, address, f_id))
+        db.commit()
+        flash('Farmer updated successfully.', 'success')
+        return redirect(url_for('admin_farmers'))
+        
+    farmer = db.execute('SELECT * FROM farmers WHERE f_id = ?', (f_id,)).fetchone()
+    if not farmer:
+         flash('Farmer not found.', 'error')
+         return redirect(url_for('admin_farmers'))
+
+    return render_template('admin_edit_farmer.html', farmer=farmer)
+
+@app.route('/admin/farmer/delete/<int:f_id>')
+def admin_delete_farmer(f_id):
+    if session.get('role') != 'admin':
+        return redirect(url_for('login'))
+    
+    db = get_db()
+    # Optional: Check if farmer has products before deleting? For now, simpler delete.
+    # Note: SQLite Foreign Keys ON DELETE actions should be considered, but current schema doesn't specify CASCADE explicitly.
+    # If we delete a farmer, their products might remain orphaned or need deletion.
+    # Logic: Delete products first to be safe or rely on DB. Let's strictly delete farmer for now as per minimal requirement, 
+    # but a better approach would be to handle associated data.
+    # Deleting farmer's products first:
+    db.execute('DELETE FROM products WHERE f_id = ?', (f_id,))
+    db.execute('DELETE FROM farmers WHERE f_id = ?', (f_id,))
+    db.commit()
+    flash('Farmer and their products deleted successfully.', 'success')
+    return redirect(url_for('admin_farmers'))
+
 # --- Cart & Payment Routes ---
 
 # Razorpay Configuration

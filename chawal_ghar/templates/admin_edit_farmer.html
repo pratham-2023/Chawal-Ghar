@@ -1,0 +1,31 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="form-container">
+    <h2>Edit Farmer Profile</h2>
+    <form method="POST">
+        <div class="form-group">
+            <label for="fullname">Full Name:</label>
+            <input type="text" id="fullname" name="fullname" value="{{ farmer['f_fullname'] }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" value="{{ farmer['f_email'] or '' }}">
+        </div>
+
+        <div class="form-group">
+            <label for="contact">Contact:</label>
+            <input type="text" id="contact" name="contact" value="{{ farmer['f_contact'] or '' }}">
+        </div>
+
+        <div class="form-group">
+            <label for="address">Address:</label>
+            <textarea id="address" name="address">{{ farmer['f_address'] or '' }}</textarea>
+        </div>
+
+        <button type="submit" class="btn">Update Farmer</button>
+        <a href="{{ url_for('admin_farmers') }}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}
