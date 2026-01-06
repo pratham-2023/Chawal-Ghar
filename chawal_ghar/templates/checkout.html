@@ -37,7 +37,8 @@
         <form action="{{ url_for('payment_success') }}" method="POST" id="payment-form">
             <div class="form-group">
                 <label for="destination">Delivery Address:</label>
-                <textarea name="destination" id="destination" required placeholder="Enter your full address"></textarea>
+                <textarea name="destination" id="destination" required
+                    placeholder="Enter your full address">{{ customer['c_address'] if customer and customer['c_address'] else '' }}</textarea>
             </div>
 
             <button id="rzp-button1" type="button" class="button"
@@ -75,8 +76,8 @@
         },
         "prefill": {
             "name": "{{ session['fullname'] }}",
-            "email": "customer@example.com",
-            "contact": "9999999999"
+            "email": "{{ customer['c_email'] if customer else 'customer@example.com' }}",
+            "contact": "{{ customer['c_contact'] if customer else '9999999999' }}"
         },
         "notes": {
             "address": "Chawal Ghar Corporate Office"

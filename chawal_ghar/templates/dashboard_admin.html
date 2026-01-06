@@ -30,8 +30,8 @@
             {% for order in orders %}
             <tr>
                 <td>#{{ order['o_id'] }}</td>
-                <td>{{ order['c_fullname'] }}</td>
-                <td>{{ order['f_fullname'] }}</td>
+                <td>{{ order['c_firstname'] }} {{ order['c_lastname'] }}</td>
+                <td>{{ order['f_firstname'] }} {{ order['f_lastname'] }}</td>
                 <td>{{ order['p_name'] }}</td>
                 <td>₹{{ order['o_amount'] }}</td>
                 <td>{{ order['o_date'] }}</td>

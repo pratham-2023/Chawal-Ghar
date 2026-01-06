@@ -18,7 +18,7 @@
             {% for customer in customers %}
             <tr>
                 <td>{{ customer['c_id'] }}</td>
-                <td>{{ customer['c_fullname'] }}</td>
+                <td>{{ customer['c_firstname'] }} {{ customer['c_lastname'] }}</td>
                 <td>{{ customer['c_email'] }}</td>
                 <td>{{ customer['c_contact'] }}</td>
                 <td>{{ customer['c_address'] }}</td>

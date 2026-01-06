@@ -17,7 +17,8 @@ CREATE TABLE cart (
 
 CREATE TABLE admins (
     a_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    a_fullname TEXT NOT NULL,
+    a_firstname TEXT NOT NULL,
+    a_lastname TEXT NOT NULL,
     a_loginname TEXT UNIQUE NOT NULL,
     a_password TEXT NOT NULL,
     a_gender TEXT,
@@ -28,7 +29,8 @@ CREATE TABLE admins (
 
 CREATE TABLE farmers (
     f_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    f_fullname TEXT NOT NULL,
+    f_firstname TEXT NOT NULL,
+    f_lastname TEXT NOT NULL,
     f_loginname TEXT UNIQUE NOT NULL,
     f_password TEXT NOT NULL,
     f_gender TEXT,
@@ -39,7 +41,8 @@ CREATE TABLE farmers (
 
 CREATE TABLE customers (
     c_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    c_fullname TEXT NOT NULL,
+    c_firstname TEXT NOT NULL,
+    c_lastname TEXT NOT NULL,
     c_loginname TEXT UNIQUE NOT NULL,
     c_password TEXT NOT NULL,
     c_gender TEXT,

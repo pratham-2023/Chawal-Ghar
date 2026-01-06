@@ -52,7 +52,7 @@
                 <label for="destination">Delivery Address</label>
                 <textarea name="destination" id="destination" required
                     placeholder="Enter your complete delivery address"
-                    style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; min-height: 80px;"></textarea>
+                    style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; min-height: 80px;">{{ customer['c_address'] if customer and customer['c_address'] else '' }}</textarea>
             </div>
 
             <!-- Total Display -->
@@ -130,8 +130,8 @@
             },
             "prefill": {
                 "name": "{{ session['fullname'] }}",
-                "email": "customer@example.com",
-                "contact": "9999999999"
+                "email": "{{ customer['c_email'] if customer else 'customer@example.com' }}",
+                "contact": "{{ customer['c_contact'] if customer else '9999999999' }}"
             },
             "theme": {
                 "color": "#2e7d32"

@@ -31,13 +31,17 @@ def index():
 def register():
     if request.method == 'POST':
         role = request.form['role']
-        fullname = request.form['fullname']
+        firstname = request.form['firstname']
+        lastname = request.form['lastname']
+        gender = request.form['gender']
+        contact = request.form['contact']
+        address = request.form['address']
+        email = request.form['email']
         loginname = request.form['loginname']
         password = request.form['password']
-        email = request.form['email']
         
-        if not role or not fullname or not loginname or not password:
-            flash('All fields are required.', 'error')
+        if not role or not firstname or not lastname or not loginname or not password:
+            flash('All required fields must be filled.', 'error')
             return redirect(url_for('register'))
 
         hashed_password = generate_password_hash(password)
@@ -45,14 +49,14 @@ def register():
         
         try:
             if role == 'farmer':
-                db.execute('INSERT INTO farmers (f_fullname, f_loginname, f_password, f_email) VALUES (?, ?, ?, ?)',
-                           (fullname, loginname, hashed_password, email))
+                db.execute('INSERT INTO farmers (f_firstname, f_lastname, f_gender, f_contact, f_address, f_email, f_loginname, f_password) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                           (firstname, lastname, gender, contact, address, email, loginname, hashed_password))
             elif role == 'customer':
-                db.execute('INSERT INTO customers (c_fullname, c_loginname, c_password, c_email) VALUES (?, ?, ?, ?)',
-                           (fullname, loginname, hashed_password, email))
+                db.execute('INSERT INTO customers (c_firstname, c_lastname, c_gender, c_contact, c_address, c_email, c_loginname, c_password) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                           (firstname, lastname, gender, contact, address, email, loginname, hashed_password))
             elif role == 'admin':
-                db.execute('INSERT INTO admins (a_fullname, a_loginname, a_password, a_email) VALUES (?, ?, ?, ?)',
-                           (fullname, loginname, hashed_password, email))
+                db.execute('INSERT INTO admins (a_firstname, a_lastname, a_gender, a_contact, a_address, a_email, a_loginname, a_password) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                           (firstname, lastname, gender, contact, address, email, loginname, hashed_password))
             
             db.commit()
             flash('Registration successful! Please login.', 'success')
@@ -90,7 +94,7 @@ def login():
             session.clear()
             session['user_id'] = user[id_field]
             session['role'] = role
-            session['fullname'] = user[role[0] + '_fullname']
+            session['fullname'] = user[role[0] + '_firstname'] + ' ' + user[role[0] + '_lastname']
             
             if role == 'admin':
                 return redirect(url_for('dashboard_admin'))
@@ -120,7 +124,7 @@ def dashboard_farmer():
     products = db.execute('SELECT * FROM products WHERE f_id = ?', (session['user_id'],)).fetchall()
     # Also show orders for this farmer's products
     orders = db.execute('''
-        SELECT orders.*, products.p_name, customers.c_fullname 
+        SELECT orders.*, products.p_name, customers.c_firstname, customers.c_lastname
         FROM orders 
         JOIN products ON orders.p_id = products.p_id 
         JOIN customers ON orders.c_id = customers.c_id
@@ -173,7 +177,7 @@ def dashboard_customer():
         return redirect(url_for('login'))
         
     db = get_db()
-    products = db.execute('SELECT products.*, farmers.f_fullname FROM products JOIN farmers ON products.f_id = farmers.f_id WHERE p_status = "Available"').fetchall()
+    products = db.execute('SELECT products.*, farmers.f_firstname, farmers.f_lastname FROM products JOIN farmers ON products.f_id = farmers.f_id WHERE p_status = "Available"').fetchall()
     my_orders = db.execute('SELECT orders.*, products.p_name FROM orders JOIN products ON orders.p_id = products.p_id WHERE orders.c_id = ?', (session['user_id'],)).fetchall()
     return render_template('dashboard_customer.html', products=products, my_orders=my_orders)
 
@@ -220,12 +224,14 @@ def buy_product(p_id):
         flash('Payment successful! Order placed.', 'success')
         return redirect(url_for('dashboard_customer'))
     
+    customer = db.execute('SELECT * FROM customers WHERE c_id = ?', (session['user_id'],)).fetchone()
+
     # GET request - Create Razorpay order for payment
     initial_amount = product['p_priceperunit']
     data = { "amount": int(initial_amount * 100), "currency": "INR", "receipt": f"buy_rcpt_{p_id}" }
     payment = client.order.create(data=data)
 
-    return render_template('buy_product.html', product=product, payment=payment, key_id=KEY_ID)
+    return render_template('buy_product.html', product=product, payment=payment, key_id=KEY_ID, customer=customer)
 
 # --- Admin Routes ---
 
@@ -236,7 +242,7 @@ def dashboard_admin():
     
     db = get_db()
     orders = db.execute('''
-        SELECT orders.*, products.p_name, customers.c_fullname, farmers.f_fullname 
+        SELECT orders.*, products.p_name, customers.c_firstname, customers.c_lastname, farmers.f_firstname, farmers.f_lastname
         FROM orders 
         JOIN products ON orders.p_id = products.p_id 
         JOIN customers ON orders.c_id = customers.c_id
@@ -253,15 +259,17 @@ def admin_profile():
     db = get_db()
     
     if request.method == 'POST':
-        fullname = request.form['fullname']
+        firstname = request.form['firstname']
+        lastname = request.form['lastname']
         contact = request.form['contact']
         email = request.form['email']
         address = request.form['address']
+        gender = request.form['gender']
         
-        db.execute('UPDATE admins SET a_fullname = ?, a_contact = ?, a_email = ?, a_address = ? WHERE a_id = ?',
-                   (fullname, contact, email, address, session['user_id']))
+        db.execute('UPDATE admins SET a_firstname = ?, a_lastname = ?, a_contact = ?, a_email = ?, a_address = ?, a_gender = ? WHERE a_id = ?',
+                   (firstname, lastname, contact, email, address, gender, session['user_id']))
         db.commit()
-        session['fullname'] = fullname # Update session fullname
+        session['fullname'] = firstname + ' ' + lastname # Update session fullname
         flash('Profile updated successfully!', 'success')
         return redirect(url_for('admin_profile'))
         
@@ -285,13 +293,15 @@ def admin_edit_customer(c_id):
     db = get_db()
     
     if request.method == 'POST':
-        fullname = request.form['fullname']
+        firstname = request.form['firstname']
+        lastname = request.form['lastname']
         email = request.form['email']
         contact = request.form['contact']
         address = request.form['address']
+        gender = request.form['gender']
         
-        db.execute('UPDATE customers SET c_fullname = ?, c_email = ?, c_contact = ?, c_address = ? WHERE c_id = ?',
-                   (fullname, email, contact, address, c_id))
+        db.execute('UPDATE customers SET c_firstname = ?, c_lastname = ?, c_email = ?, c_contact = ?, c_address = ?, c_gender = ? WHERE c_id = ?',
+                   (firstname, lastname, email, contact, address, gender, c_id))
         db.commit()
         flash('Customer updated successfully.', 'success')
         return redirect(url_for('admin_customers'))
@@ -331,13 +341,15 @@ def admin_edit_farmer(f_id):
     db = get_db()
     
     if request.method == 'POST':
-        fullname = request.form['fullname']
+        firstname = request.form['firstname']
+        lastname = request.form['lastname']
         email = request.form['email']
         contact = request.form['contact']
         address = request.form['address']
+        gender = request.form['gender']
         
-        db.execute('UPDATE farmers SET f_fullname = ?, f_email = ?, f_contact = ?, f_address = ? WHERE f_id = ?',
-                   (fullname, email, contact, address, f_id))
+        db.execute('UPDATE farmers SET f_firstname = ?, f_lastname = ?, f_email = ?, f_contact = ?, f_address = ?, f_gender = ? WHERE f_id = ?',
+                   (firstname, lastname, email, contact, address, gender, f_id))
         db.commit()
         flash('Farmer updated successfully.', 'success')
         return redirect(url_for('admin_farmers'))
@@ -462,8 +474,10 @@ def checkout():
     # Razorpay Order Creation
     data = { "amount": int(total_amount * 100), "currency": "INR", "receipt": "order_rcptid_11" }
     payment = client.order.create(data=data)
+
+    customer = db.execute('SELECT * FROM customers WHERE c_id = ?', (session['user_id'],)).fetchone()
     
-    return render_template('checkout.html', cart_items=cart_items, total_amount=total_amount, payment=payment, key_id=KEY_ID)
+    return render_template('checkout.html', cart_items=cart_items, total_amount=total_amount, payment=payment, key_id=KEY_ID, customer=customer)
 
 @app.route('/customer/payment/success', methods=['POST'])
 def payment_success():
